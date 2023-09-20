@@ -1,5 +1,9 @@
 import streamlit as st
 import requests
+from streamlit_image_comparison import image_comparison
+from PIL import Image
+from io import BytesIO
+import base64
 
 # Streamlit UI
 st.set_page_config(page_title="Feuji AI App", page_icon="🤖")
@@ -18,7 +22,9 @@ logo_html = """
             """
 
 # st.markdown(logo_html, unsafe_allow_html=True)
-
+# adding tabs
+# tab1, tab2 = st.tabs(["Multi image comparision", "Dual image comparision"])
+# with tab1:
 # File upload widgets
 st.header("Upload base of Images")
 images = st.file_uploader("", type=["jpg", "png"], accept_multiple_files=True)
@@ -32,7 +38,8 @@ if st.button("Find Matching Images"):
         # pass
     else:
         # Send images to FastAPI backend for processing
-        backend_url = "http://localhost:8000/upload/"  # Replace with your FastAPI server URL
+        
+        backend_url = "http://localhost:8000/compare/"  # Replace with your FastAPI server URL
         files = [("images", image) for image in images] + [("single_image", single_image)]
         response = requests.post(backend_url, files=files)
 
@@ -40,63 +47,32 @@ if st.button("Find Matching Images"):
             matching_images = response.json().get("matching_images", [])
             if matching_images:
                 st.success("Matching Images Found:")
-                for img_url in matching_images:
-                    st.image(img_url, use_column_width=True)
+            
+                for img_data in matching_images:
+                    
+                    
+                    image_bytes = img_data.get("image_base64",{})
+            
+                    if image_bytes:
+                        image_data = base64.b64decode(image_bytes)
+
+                # Create a PIL Image from the binary data
+                    # image = Image.open(BytesIO(image_data))
+                
+                # Display the image using st.image
+                        st.image(image_data, use_column_width=True, caption=img_data["filename"])
+                    # print(img_data["filename"],"Image")
+
             else:
                 st.warning("No matching images found.")
         else:
             st.error("An error occurred while processing images.")
-
-    # col1, col2 = st.columns(2)
-
-    # with st.form("my_form"):
-
-    #     with col1:
-
-    #         st.header("Upload List of Images")
-
-    #         uploaders = []
-
-    #         images = st.file_uploader("Upload multiple images", type=["jpg", "png"], accept_multiple_files=True)
-
-    #     with col2:
-
-    #         st.header("Upload List of Images")
-
-    #         single_images = st.file_uploader("Upload multiple images", type=["jpg", "png"], accept_multiple_files=True)
-
- 
-
- 
-
- 
-
- 
-
-# if __name__ == '__main__':
-
-#     main()
-
-
-
-
-    
-# def fetch(session, url):
-
-#     try:
-
-#         result = session.get(url)
-
-#         return result.json()
-
-#     except Exception:
-
-#         return {}
-
- 
-
- 
-
-# def main():
-
-#     session = requests.Session()
+# with tab2:
+#     image1 = st.file_uploader("", type=["jpg", "png"],key="someName1")
+#     image2 = st.file_uploader("", type=["jpg", "png"],key="someName2")
+#     if st.button("Compare images"):
+#         if image1 is not None and image2 is not None:
+#             image_comparison(
+#             image1.name,
+#             image2.name
+#             )
